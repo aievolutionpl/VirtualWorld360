@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Viewer 360° | VirtualWorld</title>
+<title>360° Immersive Viewer | VirtualWorld 360 — AI Evolution Polska</title>
+<meta name="description" content="Immersive 360° panoramic viewer powered by Three.js. Created by AI Evolution Polska."/>
+<meta name="author" content="AI Evolution Polska"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/styles.css"/>
 <style>
@@ -110,12 +112,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
     <div class="tb-room-name" id="room-label">–</div>
   </div>
   <div class="tb-right">
-    <div class="ic-btn" id="btn-rooms" title="Pokoje">🏠</div>
-    <div class="ic-btn" id="btn-env" title="Środowisko">🎛</div>
-    <div class="ic-btn" id="btn-rotate" title="Auto-obrót">⟳</div>
-    <div class="ic-btn" id="btn-hs" title="Hotspoty">📌</div>
+    <div style="display:inline-flex;align-items:center;gap:2px;padding:3px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:99px;" id="lang-toggle">
+      <button style="padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;border:none;cursor:pointer;" data-lang="en" class="lb active">EN</button>
+      <button style="padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;background:transparent;color:rgba(255,255,255,.5);border:none;cursor:pointer;" data-lang="pl" class="lb">PL</button>
+    </div>
+    <div class="ic-btn" id="btn-rooms" title="Rooms">🏠</div>
+    <div class="ic-btn" id="btn-env" title="Environment">🎛</div>
+    <div class="ic-btn" id="btn-rotate" title="Auto-rotate">⟳</div>
+    <div class="ic-btn" id="btn-hs" title="Hotspots">📌</div>
     <div class="ic-btn" id="btn-shot" title="Screenshot">📸</div>
-    <div class="ic-btn" id="btn-fs" title="Pełny ekran">⛶</div>
+    <div class="ic-btn" id="btn-fs" title="Fullscreen">⛶</div>
   </div>
 </div>
 
@@ -160,20 +166,31 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   <span class="hint">🖱 Przeciągnij · 🔍 Scroll = zoom · ⌨ WASD · F = fullscreen</span>
 </div>
 
+<script src="/assets/i18n.js"></script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
 
 const ROOMS=[
-  {id:'hq',name:'AI Evolution HQ',src:'360room.png',color:'#a855f7',icon:'🖥️',tags:'Biuro · AI',
-   hotspots:[{lon:120,lat:5,label:'Serwery',icon:'⚡'},{lon:250,lat:-10,label:'Strefa relaksu',icon:'🛋'}]},
-  {id:'server',name:'Serwer Kwantowy',src:'env-server.jpg',color:'#6366f1',icon:'⚡',tags:'Technologia · Neon',
+  {id:'hq',       name:'AI Evolution HQ',       src:'360room.png',       color:'#a855f7',icon:'🖥️',tags:'Office · AI',
+   hotspots:[{lon:120,lat:5,label:'Servers',icon:'⚡'},{lon:250,lat:-10,label:'Lounge',icon:'🛋'}]},
+  {id:'server',   name:'Quantum Server',         src:'env-server.jpg',    color:'#6366f1',icon:'⚡', tags:'Tech · Neon',
    hotspots:[{lon:60,lat:0,label:'Rack A1',icon:'🖥'},{lon:180,lat:15,label:'Cooling Unit',icon:'❄'}]},
-  {id:'studio',name:'Studio Kreatywne',src:'env-studio.jpg',color:'#ec4899',icon:'🎨',tags:'Design · Creative',
-   hotspots:[{lon:90,lat:-5,label:'Główny monitor',icon:'🖥'},{lon:300,lat:10,label:'Tablica kreatywna',icon:'✏️'}]},
-  {id:'boardroom',name:'Sala Konferencyjna',src:'env-boardroom.jpg',color:'#f59e0b',icon:'💼',tags:'Biznes · Luksus',
-   hotspots:[{lon:180,lat:0,label:'Widok na miasto',icon:'🌆'},{lon:0,lat:5,label:'Ekran prezentacji',icon:'📊'}]},
-  {id:'space',name:'Orbita LEO',src:'env-space.jpg',color:'#06b6d4',icon:'🛸',tags:'Kosmos · Orbit',
-   hotspots:[{lon:45,lat:10,label:'Ziemia',icon:'🌍'},{lon:220,lat:-15,label:'Centrum dowodzenia',icon:'🎛'}]},
+  {id:'studio',   name:'Creative Studio',        src:'env-studio.jpg',    color:'#ec4899',icon:'🎨',tags:'Design · Creative',
+   hotspots:[{lon:90,lat:-5,label:'Main Monitor',icon:'🖥'},{lon:300,lat:10,label:'Mood Board',icon:'✏️'}]},
+  {id:'boardroom',name:'Executive Boardroom',    src:'env-boardroom.jpg', color:'#f59e0b',icon:'💼',tags:'Business · Luxury',
+   hotspots:[{lon:180,lat:0,label:'City View',icon:'🏉'},{lon:0,lat:5,label:'Presentation Screen',icon:'📊'}]},
+  {id:'space',    name:'LEO Space Orbit',         src:'env-space.jpg',     color:'#06b6d4',icon:'🛸',tags:'Space · Orbit',
+   hotspots:[{lon:45,lat:10,label:'Earth',icon:'🌍'},{lon:220,lat:-15,label:'Control Center',icon:'🎛'}]},
+  {id:'tokyo',    name:'Tokyo Neon Rooftop',      src:'env-tokyo.jpg',     color:'#a855f7',icon:'🗻',tags:'Cyberpunk · Night',
+   hotspots:[{lon:30,lat:0,label:'Neon Billboards',icon:'🌆'},{lon:200,lat:5,label:'Flying Taxi',icon:'🚕'}]},
+  {id:'jungle',   name:'Jungle Temple',           src:'env-jungle.jpg',    color:'#10b981',icon:'🌴',tags:'Nature · Ancient',
+   hotspots:[{lon:80,lat:-5,label:'Stone Face',icon:'🗿'},{lon:270,lat:10,label:'Hidden Path',icon:'🐾'}]},
+  {id:'arctic',   name:'Arctic Aurora Station',   src:'env-arctic.jpg',    color:'#06b6d4',icon:'❄️',tags:'Arctic · Aurora',
+   hotspots:[{lon:90,lat:20,label:'Aurora',icon:'🌌'},{lon:300,lat:0,label:'Research Lab',icon:'🔬'}]},
+  {id:'palace',   name:'Royal Palace Hall',        src:'env-palace.jpg',    color:'#f59e0b',icon:'👑',tags:'Baroque · Luxury',
+   hotspots:[{lon:0,lat:5,label:'Throne',icon:'👑'},{lon:180,lat:-5,label:'Grand Chandelier',icon:'💡'}]},
+  {id:'neon',     name:'Vaporwave Neon Grid',      src:'env-neon.jpg',      color:'#ec4899',icon:'🌴',tags:'Abstract · Retro',
+   hotspots:[{lon:60,lat:0,label:'Grid Horizon',icon:'🌅'},{lon:240,lat:5,label:'Neon Palm',icon:'🌴'}]},
 ];
 
 // THREE setup

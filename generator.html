@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Generator Światów 360° | VirtualWorld</title>
+<title>AI World Generator 360° | VirtualWorld 360 — AI Evolution Polska</title>
+<meta name="description" content="Generate immersive 360° AI worlds. Powered by gpt-image-2. Created by AI Evolution Polska."/>
+<meta name="author" content="AI Evolution Polska"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -84,25 +86,34 @@
     <div class="name">Virtual<b>World</b> 360</div>
   </div>
   <nav class="sidebar-nav">
-    <div class="sidebar-section">Nawigacja</div>
-    <a href="index.html"     class="nav-item" data-view-transition><span class="nav-icon">🏠</span><span>Dashboard</span></a>
-    <a href="generator.html" class="nav-item active"><span class="nav-icon">✨</span><span>Generator AI</span></a>
-    <a href="viewer360.html" class="nav-item" data-view-transition><span class="nav-icon">🌐</span><span>Przeglądarka 360°</span></a>
-    <div class="sidebar-section">Skróty</div>
-    <button class="nav-item" id="last-prompt-btn"><span class="nav-icon">↺</span><span>Ostatni prompt</span></button>
+    <div class="sidebar-section">Navigation</div>
+    <a href="index.html"     class="nav-item" data-view-transition><span class="nav-icon">🏠</span><span data-i18n="nav_dashboard">Dashboard</span></a>
+    <a href="generator.html" class="nav-item active"><span class="nav-icon">✨</span><span data-i18n="nav_generator">AI Generator</span></a>
+    <a href="viewer360.html" class="nav-item" data-view-transition><span class="nav-icon">🌐</span><span data-i18n="nav_viewer">360° Viewer</span></a>
+    <div class="sidebar-section">Shortcuts</div>
+    <button class="nav-item" id="last-prompt-btn"><span class="nav-icon">↺</span><span data-i18n="nav_last_prompt">Last Prompt</span></button>
+    <button class="nav-item" id="random-prompt-btn"><span class="nav-icon">🎲</span><span>Random World</span></button>
   </nav>
   <div class="sidebar-bottom">
-    <div class="stat-mini"><span class="stat-mini-label">Szablony</span><span class="stat-mini-val" id="sb-tpl">—</span></div>
-    <div class="stat-mini"><span class="stat-mini-label">Wygenerowane</span><span class="stat-mini-val" id="sb-gen">—</span></div>
+    <div class="stat-mini"><span class="stat-mini-label" data-i18n="stat_templates">Templates</span><span class="stat-mini-val" id="sb-tpl">—</span></div>
+    <div class="stat-mini"><span class="stat-mini-label" data-i18n="stat_generated">Generated</span><span class="stat-mini-val" id="sb-gen">—</span></div>
+  </div>
+  <div class="sidebar-brand">
+    <span class="sidebar-brand-logo">🤖</span>
+    <div class="sidebar-brand-text">Powered by<b>AI Evolution Polska</b></div>
   </div>
 </aside>
 
 <div class="main">
   <header class="topbar">
-    <div class="crumbs">VirtualWorld 360 <span class="sep">/</span><b>Generator</b></div>
+    <div class="crumbs">VirtualWorld 360 <span class="sep">/</span><b data-i18n="nav_generator">AI Generator</b></div>
     <div style="display:flex; align-items:center; gap:10px;">
+      <div class="lang-toggle" id="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="pl">PL</button>
+      </div>
       <a href="viewer360.html" class="btn btn-ghost" data-view-transition style="padding:7px 14px; font-size:12px;">🌐 Viewer</a>
-      <div class="avatar">AI</div>
+      <div class="avatar" title="AI Evolution Polska">AI</div>
     </div>
   </header>
 
@@ -110,9 +121,9 @@
 
     <!-- HERO -->
     <div class="gen-hero" data-fx="fade">
-      <h1 class="h-display">Generuj <span class="t-grad-aurora">Światy 360°</span> z AI</h1>
-      <p class="t-meta" style="max-width: 580px; margin: 12px auto 0; line-height: 1.6;">
-        Wybierz szablon, opcjonalnie wgraj zdjęcia referencyjne, dostosuj opis — i pozwól AI wygenerować immersyjną panoramę 360° gotową do eksploracji w VR.
+      <h1 class="h-display"><span data-i18n="gen_hero_title">Generate</span> <span class="t-grad-aurora" data-i18n="gen_hero_hl">360° Worlds</span> <span data-i18n="gen_hero_with">with AI</span></h1>
+      <p class="t-meta" style="max-width: 580px; margin: 12px auto 0; line-height: 1.6;" data-i18n="gen_hero_desc">
+        Choose a template, optionally upload reference images, customize the description — and let AI generate an immersive 360° panorama ready for VR exploration.
       </p>
     </div>
 
@@ -182,7 +193,7 @@
     </section>
 
     <!-- GENERATE -->
-    <button id="gen-btn" class="btn btn-primary btn-lg" data-ripple data-magnetic="0.12">✨ Generuj Świat 360°</button>
+    <button id="gen-btn" class="btn btn-primary btn-lg" data-ripple data-magnetic="0.12" data-i18n="gen_btn">✨ Generate 360° World</button>
 
     <div id="progress">
       <div class="progress-track prog-track"><div class="progress-fill" id="prog-fill"></div></div>
@@ -214,10 +225,33 @@
   </div>
 </div>
 
+<script src="/assets/i18n.js"></script>
 <script src="/assets/templates.js"></script>
 <script src="/assets/api-client.js"></script>
 <script src="/assets/motion.js"></script>
 <script>
+/* i18n */
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if(v) el.textContent = v; });
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === VW_LANG));
+  document.documentElement.lang = VW_LANG;
+}
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.lang-btn'); if(!btn) return;
+  VW_SET_LANG(btn.dataset.lang); applyI18n(); renderTemplates();
+});
+applyI18n();
+
+/* Random world */
+document.getElementById('random-prompt-btn').onclick = () => {
+  const random = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+  selectTemplate(random);
+  activeCategory = 'All';
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.textContent === 'All'));
+  renderTemplates();
+  VW.toast('🎲 Random: ' + random.name, 'info');
+};
+
 const $  = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 
