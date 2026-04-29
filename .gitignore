@@ -5,3 +5,10 @@ dist
 .vscode
 .cursor
 .idea
+
+# Environment variables - NEVER commit your API key!
+.env
+
+# Generated AI images - user-specific, not tracked in git
+generated/
+!generated/.gitkeep
