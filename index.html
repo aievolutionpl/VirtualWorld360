@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VirtualWorld 360 — Dashboard | AI Evolution Polska</title>
+<meta name="description" content="AI-powered immersive 360° virtual world platform by AI Evolution Polska. Generate, explore and share stunning panoramic environments."/>
+<meta name="author" content="AI Evolution Polska"/>
+<meta property="og:title" content="VirtualWorld 360 — AI World Generator"/>
+<meta property="og:description" content="Create immersive 360° environments powered by AI in seconds."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/styles.css"/>
+<style>
+  .hero-content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; width: 100%; }
+  .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .hero-stats { display: flex; gap: 32px; }
+  .hero-stat-label { font-size: 11px; color: var(--muted); margin-top: 5px; letter-spacing: .05em; text-transform: uppercase; }
+
+  .rooms-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+  .tools-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .bottom-grid { display: grid; grid-template-columns: 1fr 380px; gap: 18px; }
+  @media (max-width: 1100px){ .bottom-grid { grid-template-columns: 1fr; } }
+
+  .room-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .room-explore { font-size: 11px; font-weight: 600; padding: 5px 13px; border-radius: 7px; cursor: pointer; transition: all .2s; flex-shrink: 0; }
+
+  .tool-card { display: flex; gap: 20px; align-items: flex-start; padding: 24px; text-decoration: none; color: inherit; }
+  .tool-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .tool-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .tool-info p  { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+
+  .stat-row     { display: flex; align-items: center; gap: 12px; margin-bottom: 13px; }
+  .stat-row:last-child { margin-bottom: 0; }
+  .stat-dot     { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .stat-name    { font-size: 13px; color: var(--muted); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat-bar     { flex: 1.5; height: 5px; background: rgba(255,255,255,.06); border-radius: 10px; overflow: hidden; }
+  .stat-bar > div { height: 100%; border-radius: 10px; transition: width 1.4s var(--ease-out-expo); }
+  .stat-val     { font-size: 12px; font-weight: 700; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .activity-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--r); background: var(--glass); border: 1px solid var(--border); margin-bottom: 8px; transition: background .2s; }
+  .activity-item:last-child { margin-bottom: 0; }
+  .activity-item:hover { background: var(--glass-2); }
+  .act-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .act-text { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .act-text b { color: var(--text); font-weight: 600; }
+  .act-time { font-size: 10px; color: var(--dim); flex-shrink: 0; }
+
+  .hero { view-transition-name: vw-hero; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="dot"></div>
+    <div class="name">Virtual<b>World</b> 360</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section" data-i18n="nav_environments">Environments</div>
+    <a href="index.html"     class="nav-item active"><span class="nav-icon">🏠</span><span data-i18n="nav_dashboard">Dashboard</span></a>
+    <a href="generator.html" class="nav-item" data-view-transition><span class="nav-icon">✨</span><span data-i18n="nav_generator">AI Generator</span></a>
+    <a href="viewer360.html" class="nav-item" data-view-transition><span class="nav-icon">🌐</span><span data-i18n="nav_viewer">360° Viewer</span></a>
+    <div class="sidebar-section" data-i18n="nav_environments">Environments</div>
+    <div id="env-nav"></div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="stat-mini"><span class="stat-mini-label" data-i18n="stat_environments">Environments</span><span class="stat-mini-val" id="sb-rooms">—</span></div>
+    <div class="stat-mini"><span class="stat-mini-label" data-i18n="stat_generated">Generated</span><span class="stat-mini-val" id="sb-gen">—</span></div>
+    <div class="stat-mini"><span class="stat-mini-label" data-i18n="stat_today">Today</span><span class="stat-mini-val" id="sb-today">—</span></div>
+  </div>
+  <div class="sidebar-brand">
+    <span class="sidebar-brand-logo">🤖</span>
+    <div class="sidebar-brand-text">
+      Powered by<b>AI Evolution Polska</b>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="crumbs">VirtualWorld 360 <span class="sep">/</span><b data-i18n="nav_dashboard">Dashboard</b></div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="lang-toggle" id="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="pl">PL</button>
+      </div>
+      <div class="topbar-search">
+        <span>🔍</span>
+        <input type="text" id="search" data-i18n-ph="search_placeholder" placeholder="Search environments…"/>
+      </div>
+      <div class="avatar" title="AI Evolution Polska">AI</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- HERO -->
+    <section class="hero" data-fx="fade">
+      <div class="hero-orb" data-parallax="22"></div>
+      <div class="hero-orb-2" data-parallax="-14"></div>
+      <div class="hero-orb-3"></div>
+      <div class="hero-content">
+        <div>
+          <h1 class="h-display">
+            <span data-i18n="hero_title">Explore</span> <span class="t-grad-aurora" data-i18n="hero_highlight">Virtual Worlds</span><br>
+            <span data-i18n="hero_sub">in 360° Technology</span>
+          </h1>
+          <p class="t-meta" style="max-width:520px; margin-top:14px; line-height:1.6;" data-i18n="hero_desc">
+            Immersive 360° environments generated with AI. Choose templates, upload reference photos and create VR-ready spaces in seconds.
+          </p>
+          <div class="hero-cta">
+            <a href="generator.html" class="btn btn-primary btn-lg" data-view-transition data-ripple data-magnetic="0.18" data-i18n="hero_cta_gen">✨ Generate AI World</a>
+            <a href="viewer360.html" class="btn btn-ghost btn-lg" data-view-transition data-i18n="hero_cta_view">🌐 Open Viewer</a>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div style="text-align:center"><div class="hero-stat-val" data-count="0" id="hs-rooms">0</div><div class="hero-stat-label" data-i18n="hero_stat_env">Environments</div></div>
+          <div style="text-align:center"><div class="hero-stat-val" data-count="0" id="hs-gen">0</div><div class="hero-stat-label" data-i18n="hero_stat_gen">Generated</div></div>
+          <div style="text-align:center"><div class="hero-stat-val">360°</div><div class="hero-stat-label" data-i18n="hero_stat_360">Panoramas</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROOMS -->
+    <section>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 class="h-title" data-i18n="rooms_title">🌍 Available Environments</h2>
+        <a href="generator.html" class="btn btn-quiet" data-view-transition data-i18n="rooms_create">+ Create New</a>
+      </div>
+      <div class="rooms-grid fx-stagger" id="rooms-grid"></div>
+    </section>
+
+    <!-- GENERATED GALLERY -->
+    <section id="gen-section" style="display:none">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 class="h-title" data-i18n="gen_title">✨ Your Generated Worlds</h2>
+        <a href="generator.html" class="btn btn-quiet" data-view-transition data-i18n="gen_more">Generate More →</a>
+      </div>
+      <div class="rooms-grid fx-stagger" id="gen-grid"></div>
+    </section>
+
+    <!-- TOOLS -->
+    <section>
+      <h2 class="h-title" style="margin-bottom:16px;" data-i18n="tools_title">🛠 Tools</h2>
+      <div class="tools-grid">
+        <a href="generator.html" class="card card-hover tool-card" data-view-transition data-fx>
+          <div class="tool-icon" style="background:rgba(168,85,247,.15)">✨</div>
+          <div class="tool-info">
+            <h3 data-i18n="tool_gen_name">AI World Generator</h3>
+            <p data-i18n="tool_gen_desc">Describe your world, add reference images and let AI generate an immersive 360° panorama.</p>
+            <span class="chip">AI · gpt-image-2</span>
+          </div>
+        </a>
+        <a href="viewer360.html" class="card card-hover tool-card" data-view-transition data-fx>
+          <div class="tool-icon" style="background:rgba(99,102,241,.15)">🌐</div>
+          <div class="tool-info">
+            <h3 data-i18n="tool_viewer_name">360° Viewer</h3>
+            <p data-i18n="tool_viewer_desc">Three.js viewer with hotspots, auto-tour mode and lighting controls. Fullscreen & VR.</p>
+            <span class="chip" style="background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.3); color:#a5b4fc;">Three.js</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- BOTTOM -->
+    <div class="bottom-grid">
+      <div class="card card-pad" data-fx>
+        <h3 class="h-title" style="font-size:14px; margin-bottom:16px;" data-i18n="usage_title">📊 Environment Usage</h3>
+        <div id="usage-list"></div>
+      </div>
+      <div class="card card-pad" data-fx>
+        <h3 class="h-title" style="font-size:14px; margin-bottom:14px;" data-i18n="activity_title">⚡ Recent Activity</h3>
+        <div id="activity-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/assets/i18n.js"></script>
+<script src="/assets/templates.js"></script>
+<script src="/assets/api-client.js"></script>
+<script src="/assets/motion.js"></script>
+<script>
+/* ── i18n ── */
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = t(key);
+    if (val) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh) || el.placeholder;
+  });
+  document.documentElement.lang = VW_LANG;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === VW_LANG));
+}
+
+document.getElementById('lang-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.lang-btn');
+  if (!btn) return;
+  VW_SET_LANG(btn.dataset.lang);
+  applyI18n();
+  /* re-render dynamic content */
+  renderRoomsGrid();
+  loadLive();
+});
+
+applyI18n();
+
+/* ── Built-in environments ── */
+const ROOMS = [
+  { id:'hq',        name:'AI Evolution HQ',       desc:'The main headquarters of AI Evolution Polska. Office with server room, workstations and a relaxation zone.',    src:'360room.png',       tags:['Office','AI'],          color:'#a855f7', icon:'🖥️' },
+  { id:'server',    name:'Quantum Server',         desc:'Futuristic server room with quantum systems arranged in a circular layout.',                                    src:'env-server.jpg',    tags:['Server','Neon'],        color:'#6366f1', icon:'⚡' },
+  { id:'studio',    name:'Creative Studio',        desc:'Modern studio with curved monitors and neon accents for creative teams.',                                       src:'env-studio.jpg',    tags:['Design','Studio'],      color:'#ec4899', icon:'🎨' },
+  { id:'boardroom', name:'Executive Boardroom',    desc:'Luxury conference room with panoramic night skyline view and holographic displays.',                            src:'env-boardroom.jpg', tags:['Business','Night'],     color:'#f59e0b', icon:'💼' },
+  { id:'space',     name:'LEO Orbit',              desc:'Interior of a space station with Earth visible through circular windows.',                                      src:'env-space.jpg',     tags:['Space','Orbit'],        color:'#06b6d4', icon:'🛸' },
+  { id:'tokyo',     name:'Tokyo Neon Rooftop',     desc:'Cyberpunk Tokyo rooftop at night with glowing kanji billboards and rain-slicked streets.',                     src:'env-tokyo.jpg',     tags:['Tokyo','Cyberpunk'],    color:'#a855f7', icon:'🗼' },
+  { id:'jungle',    name:'Jungle Temple',          desc:'Ancient temple ruins deep in a tropical jungle, with stone carved faces and golden sunbeams.',                 src:'env-jungle.jpg',    tags:['Jungle','Temple'],      color:'#10b981', icon:'🌴' },
+  { id:'arctic',    name:'Arctic Aurora Station',  desc:'Arctic research station beneath a vivid aurora borealis sky with frozen tundra surroundings.',                src:'env-arctic.jpg',    tags:['Arctic','Aurora'],      color:'#06b6d4', icon:'❄️' },
+  { id:'palace',    name:'Royal Palace Hall',      desc:'Grand baroque palatial hall with gilded ceilings, crystal chandeliers and marble floors.',                    src:'env-palace.jpg',    tags:['Palace','Baroque'],     color:'#f59e0b', icon:'👑' },
+  { id:'neon',      name:'Vaporwave Neon Grid',    desc:'Retro-futuristic vaporwave dimension with infinite pink-cyan grid horizon and synthwave aesthetics.',          src:'env-neon.jpg',      tags:['Vaporwave','Abstract'], color:'#ec4899', icon:'🌴' },
+];
+
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+/* ── Sidebar env list ── */
+const envNav = $('#env-nav');
+function buildEnvNav() {
+  envNav.innerHTML = '';
+  ROOMS.forEach(r => {
+    const a = document.createElement('a');
+    a.href = `viewer360.html?room=${r.id}`;
+    a.className = 'nav-item';
+    a.dataset.viewTransition = '';
+    a.innerHTML = `<span class="nav-icon">${r.icon}</span><span>${r.name}</span>`;
+    envNav.appendChild(a);
+  });
+}
+buildEnvNav();
+
+/* ── Render a thumb-card ── */
+function renderRoomCard(r, opts={}) {
+  const card = document.createElement('a');
+  card.className = 'thumb-card';
+  card.href = opts.href || `viewer360.html?room=${r.id}`;
+  if (!opts.skipTransition) card.dataset.viewTransition = '';
+  card.dataset.fx = '';
+  card.innerHTML = `
+    <div class="thumb" style="background-image:url('${r.src}')">
+      <div class="play">▶</div>
+      ${r.badge ? `<div class="badge" style="background:${r.color}22; border:1px solid ${r.color}44; color:${r.color};">${r.badge}</div>` : ''}
+    </div>
+    <div class="thumb-body">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
+        <div style="font-size:14px; font-weight:600;">${r.name}</div>
+        ${r.delete ? `<button class="btn-icon" style="width:28px;height:28px;font-size:13px;" title="Delete" data-del="${r.delete}">🗑</button>` : ''}
+      </div>
+      ${r.desc ? `<div class="t-meta" style="line-height:1.5; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${r.desc}</div>` : ''}
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="room-tags">
+          ${(r.tags||[]).map(tag => `<span class="chip chip-quiet" style="color:${r.color}; border-color:${r.color}33; background:${r.color}11;">${tag}</span>`).join('')}
+        </div>
+        <span class="chip" style="color:${r.color}; border-color:${r.color}55; background:${r.color}15;">${t('explore')}</span>
+      </div>
+    </div>`;
+  return card;
+}
+
+const roomsGrid = $('#rooms-grid');
+function renderRoomsGrid() {
+  roomsGrid.innerHTML = '';
+  ROOMS.forEach(r => roomsGrid.appendChild(renderRoomCard({ ...r, badge: `${r.icon} LIVE` })));
+}
+renderRoomsGrid();
+
+/* ── Live data ── */
+async function loadLive() {
+  const [list, stats] = await Promise.all([
+    VW_API.list().catch(() => ({ images: [] })),
+    VW_API.stats().catch(() => ({ count: 0, last24h: 0, last7d: 0, byTemplate: {} })),
+  ]);
+
+  $('#hs-rooms').dataset.count = ROOMS.length;
+  $('#hs-gen').dataset.count   = stats.count || 0;
+  $('#sb-rooms').textContent   = ROOMS.length;
+  $('#sb-gen').textContent     = stats.count || 0;
+  $('#sb-today').textContent   = stats.last24h || 0;
+  VW.bindCounters($('.hero-stats'));
+
+  /* generated grid */
+  const genSection = $('#gen-section');
+  const genGrid = $('#gen-grid');
+  genGrid.innerHTML = '';
+  if (list.images && list.images.length) {
+    genSection.style.display = '';
+    list.images.slice(0, 12).forEach((img, i) => {
+      const tpl = (window.VW_TEMPLATES || []).find(t => t.id === img.templateId);
+      const card = renderRoomCard({
+        id: img.filename,
+        name: tpl ? tpl.name : (img.prompt ? img.prompt.slice(0, 40) + (img.prompt.length > 40 ? '…' : '') : 'AI World'),
+        desc: img.prompt || 'Generated 360° world',
+        src: img.url,
+        tags: [tpl?.category || 'AI', img.quality || 'medium'],
+        color: '#a855f7',
+        icon: tpl?.icon || '✨',
+        badge: '✨ AI',
+        delete: img.filename,
+      }, { href: `viewer360.html?src=${encodeURIComponent(img.url)}`, skipTransition: false });
+      card.style.setProperty('--i', i);
+      genGrid.appendChild(card);
+    });
+    VW.refresh(genGrid);
+
+    genGrid.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-del]');
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      if (!confirm(t('confirm_delete'))) return;
+      try {
+        await VW_API.remove(b.dataset.del);
+        VW.toast(t('deleted'), 'ok');
+        loadLive();
+      } catch (err) { VW.toast(t('error_prefix') + err.message, 'err'); }
+    }, { once: true });
+  }
+
+  /* usage chart */
+  const usageList = $('#usage-list');
+  usageList.innerHTML = '';
+  const colors = ['#a855f7','#6366f1','#ec4899','#f59e0b','#06b6d4','#10b981'];
+  const totalGen = Math.max(1, stats.count || 1);
+  const pairs = Object.entries(stats.byTemplate || {}).sort((a,b) => b[1]-a[1]).slice(0, 6);
+  if (!pairs.length) {
+    ROOMS.slice(0, 6).forEach((r, i) => {
+      const pct = [82, 73, 61, 48, 34, 22, 18, 14, 10, 8][i] || 8;
+      usageList.innerHTML += `<div class="stat-row">
+        <div class="stat-dot" style="background:${r.color}"></div>
+        <span class="stat-name">${r.name}</span>
+        <div class="stat-bar"><div style="width:${pct}%; background:${r.color}"></div></div>
+        <span class="stat-val" style="color:${r.color}">${pct}%</span>
+      </div>`;
+    });
+  } else {
+    pairs.forEach(([tplId, count], i) => {
+      const tpl = (window.VW_TEMPLATES || []).find(t => t.id === tplId);
+      const name = tpl ? tpl.name : tplId;
+      const pct = Math.round(100 * count / totalGen);
+      const color = colors[i % colors.length];
+      usageList.innerHTML += `<div class="stat-row">
+        <div class="stat-dot" style="background:${color}"></div>
+        <span class="stat-name">${name}</span>
+        <div class="stat-bar"><div style="width:${pct}%; background:${color}"></div></div>
+        <span class="stat-val" style="color:${color}">${pct}%</span>
+      </div>`;
+    });
+  }
+
+  /* activity feed */
+  const al = $('#activity-list');
+  al.innerHTML = '';
+  const recent = (list.images || []).slice(0, 5);
+  if (!recent.length) {
+    al.innerHTML = `<div class="t-meta" style="padding:12px; text-align:center;">
+      ${t('activity_empty')} <a href="generator.html" class="t-grad" style="font-weight:600;" data-view-transition>${t('activity_cta')}</a>
+    </div>`;
+  } else {
+    recent.forEach((img) => {
+      const tpl = (window.VW_TEMPLATES || []).find(tp => tp.id === img.templateId);
+      const when = relativeTime(img.created);
+      const withRef = img.mode === 'ref:1' || /^ref/.test(img.mode||'');
+      al.innerHTML += `<div class="activity-item">
+        <div class="act-icon" style="background:rgba(168,85,247,.15)">${tpl?.icon || '✨'}</div>
+        <div class="act-text">${t('act_generated')} <b>${tpl?.name || 'AI World'}</b>${withRef ? ' ' + t('act_with_ref') : ''}</div>
+        <div class="act-time">${when}</div>
+      </div>`;
+    });
+  }
+}
+
+function relativeTime(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diff / 60000);
+  if (VW_LANG === 'pl') {
+    if (m < 1) return 'teraz';
+    if (m < 60) return `${m} min temu`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h} h temu`;
+    return `${Math.round(h / 24)} dni temu`;
+  } else {
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.round(h / 24)}d ago`;
+  }
+}
+
+/* search filter */
+$('#search').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  $$('.thumb-card', roomsGrid).forEach((c, i) => {
+    const r = ROOMS[i];
+    const match = !q || r.name.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.tags.join(' ').toLowerCase().includes(q);
+    c.style.display = match ? '' : 'none';
+  });
+});
+
+/* lang change → re-render */
+window.addEventListener('vw-lang-change', () => {
+  applyI18n();
+  renderRoomsGrid();
+  loadLive();
+});
+
+loadLive();
+</script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Generator Światów 360° | VirtualWorld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/styles.css"/>
+<style>
+  /* page-specific */
+  .gen-hero { text-align: center; padding: 8px 0 0; }
+
+  .step-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .step-head h2 { font-size: 14px; font-weight: 700; }
+  .step-head h2 .num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--grad-brand); color: #fff; font-size: 11px; font-weight: 700; margin-right: 8px; }
+
+  .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-tab { padding: 7px 14px; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; cursor: pointer; background: var(--glass); border: 1px solid var(--border); color: var(--muted); transition: all var(--d-fast) var(--ease-out-quart); }
+  .cat-tab:hover { color: var(--text); background: var(--glass-2); }
+  .cat-tab.active { background: rgba(168,85,247,.18); border-color: rgba(168,85,247,.4); color: var(--purple-2); }
+
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .tpl {
+    border-radius: var(--r); overflow: hidden;
+    border: 2px solid transparent; cursor: pointer;
+    transition: transform var(--d-base) var(--ease-out-quart), border-color var(--d-base), box-shadow var(--d-base);
+    position: relative; aspect-ratio: 16/10;
+    background-size: cover; background-position: center;
+  }
+  .tpl::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.2) 60%, transparent 100%); transition: opacity var(--d-base); }
+  .tpl:hover { transform: translateY(-3px); border-color: rgba(168,85,247,.4); box-shadow: var(--el-3); }
+  .tpl:hover::before { opacity: .65; }
+  .tpl.selected { border-color: var(--purple); box-shadow: var(--glow-purple); }
+  .tpl-body { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 14px; }
+  .tpl-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .tpl-name { font-size: 13px; font-weight: 700; color: #fff; }
+  .tpl-tag  { font-size: 10px; color: rgba(255,255,255,.55); margin-top: 2px; }
+  .tpl-check { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: var(--grad-brand); display: none; align-items: center; justify-content: center; font-size: 12px; color: #fff; box-shadow: 0 4px 12px rgba(168,85,247,.5); }
+  .tpl.selected .tpl-check { display: flex; }
+  .tpl-empty { grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted); }
+
+  /* reference uploader */
+  .uploader { border: 1px dashed var(--border3); border-radius: var(--r); padding: 22px; text-align: center; transition: border-color var(--d-base), background var(--d-base); cursor: pointer; }
+  .uploader:hover, .uploader.drag { border-color: rgba(168,85,247,.5); background: rgba(168,85,247,.05); }
+  .uploader-empty { color: var(--muted); font-size: 13px; }
+  .uploader-empty .ic { font-size: 28px; display: block; margin-bottom: 6px; }
+  .ref-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .ref-item { position: relative; aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden; border: 1px solid var(--border); }
+  .ref-item img { width:100%; height:100%; object-fit: cover; display:block; }
+  .ref-rm { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.7); border: 1px solid rgba(255,255,255,.2); color: #fff; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .ref-rm:hover { background: rgba(244,63,94,.85); }
+
+  #gen-btn { width: 100%; max-width: 520px; margin: 0 auto; }
+
+  #progress { display: none; flex-direction: column; gap: 10px; align-items: center; }
+  #progress.on { display: flex; }
+  .prog-track { width: 100%; max-width: 520px; }
+  .prog-txt   { font-size: 12px; color: var(--muted); }
+
+  #result { display: none; flex-direction: column; gap: 18px; }
+  #result.on { display: flex; animation: rise .55s var(--ease-out-expo); }
+  .result-wrap { border-radius: var(--r-lg); overflow: hidden; position: relative; background: var(--bg2); border: 1px solid rgba(168,85,247,.32); box-shadow: var(--glow-soft); }
+  .result-img { width: 100%; display: block; max-height: 540px; object-fit: cover; }
+  .result-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(7,7,14,.92) 0%, transparent 55%); display: flex; flex-direction: column; justify-content: flex-end; padding: 32px; }
+
+  .gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .g-card { border-radius: var(--r-sm); overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: transform var(--d-base), border-color var(--d-base); position: relative; aspect-ratio: 16/10; }
+  .g-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s var(--ease-out-quart); }
+  .g-card:hover { transform: translateY(-2px); border-color: rgba(168,85,247,.4); }
+  .g-card:hover img { transform: scale(1.06); }
+  .g-card-lbl { position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 10px; background: linear-gradient(to top, rgba(7,7,14,.92), transparent); font-size: 10px; font-weight: 600; }
+
+  .options-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .opt-label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="dot"></div>
+    <div class="name">Virtual<b>World</b> 360</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Nawigacja</div>
+    <a href="index.html"     class="nav-item" data-view-transition><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+    <a href="generator.html" class="nav-item active"><span class="nav-icon">✨</span><span>Generator AI</span></a>
+    <a href="viewer360.html" class="nav-item" data-view-transition><span class="nav-icon">🌐</span><span>Przeglądarka 360°</span></a>
+    <div class="sidebar-section">Skróty</div>
+    <button class="nav-item" id="last-prompt-btn"><span class="nav-icon">↺</span><span>Ostatni prompt</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="stat-mini"><span class="stat-mini-label">Szablony</span><span class="stat-mini-val" id="sb-tpl">—</span></div>
+    <div class="stat-mini"><span class="stat-mini-label">Wygenerowane</span><span class="stat-mini-val" id="sb-gen">—</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="crumbs">VirtualWorld 360 <span class="sep">/</span><b>Generator</b></div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a href="viewer360.html" class="btn btn-ghost" data-view-transition style="padding:7px 14px; font-size:12px;">🌐 Viewer</a>
+      <div class="avatar">AI</div>
+    </div>
+  </header>
+
+  <div class="content" style="max-width: 1200px; margin: 0 auto; gap: 32px;">
+
+    <!-- HERO -->
+    <div class="gen-hero" data-fx="fade">
+      <h1 class="h-display">Generuj <span class="t-grad-aurora">Światy 360°</span> z AI</h1>
+      <p class="t-meta" style="max-width: 580px; margin: 12px auto 0; line-height: 1.6;">
+        Wybierz szablon, opcjonalnie wgraj zdjęcia referencyjne, dostosuj opis — i pozwól AI wygenerować immersyjną panoramę 360° gotową do eksploracji w VR.
+      </p>
+    </div>
+
+    <!-- STEP 1 — TEMPLATES -->
+    <section data-fx>
+      <div class="step-head">
+        <h2><span class="num">1</span> Wybierz szablon</h2>
+        <input type="text" class="input" id="tpl-search" placeholder="Szukaj szablonu…" style="max-width: 220px; padding: 8px 12px; font-size: 12px;"/>
+      </div>
+      <div class="cat-tabs" id="cat-tabs" style="margin-bottom: 14px;"></div>
+      <div class="tpl-grid" id="tpl-grid"></div>
+    </section>
+
+    <!-- STEP 2 — REFERENCE IMAGES -->
+    <section data-fx>
+      <div class="step-head">
+        <h2><span class="num">2</span> Obrazy referencyjne <span class="t-meta" style="font-weight: 400;">(opcjonalnie, max 4)</span></h2>
+        <span class="t-meta" id="ref-counter">0 / 4</span>
+      </div>
+      <div class="uploader" id="uploader">
+        <input type="file" id="file-input" accept="image/*" multiple hidden/>
+        <div class="uploader-empty" id="uploader-empty">
+          <span class="ic">📎</span>
+          <div><b>Przeciągnij i upuść</b> obrazy lub <span class="t-grad" style="font-weight:600; cursor:pointer;">kliknij, aby wybrać</span></div>
+          <div style="font-size:11px; margin-top:6px;">JPG, PNG, WEBP · max 4 MB / obraz</div>
+        </div>
+        <div class="ref-grid" id="ref-grid" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- STEP 3 — CUSTOMIZE -->
+    <section data-fx>
+      <div class="step-head">
+        <h2><span class="num">3</span> Dostosuj opis <span class="t-meta" style="font-weight: 400;">(opcjonalnie)</span></h2>
+        <button class="btn btn-quiet" id="prompt-clear" style="padding: 5px 12px; font-size: 11px;">↺ Wyczyść</button>
+      </div>
+      <div class="card card-pad" style="display: flex; flex-direction: column; gap: 14px;">
+        <textarea class="input" id="prompt" rows="3" placeholder="Np. dodaj zachód słońca, deszcz, konkretny klimat, elementy architektury…"></textarea>
+        <div class="options-row" style="flex-wrap: wrap; gap: 16px;">
+          <!-- Quality -->
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="opt-label">Jakość:</span>
+            <div class="seg" id="quality-group">
+              <button class="seg-btn" data-q="low" title="~10s — szybki podgląd">Szybka</button>
+              <button class="seg-btn" data-q="medium" title="~20s — dobra jakość">Standard</button>
+              <button class="seg-btn active" data-q="high" title="~35s — maksymalna jakość">Premium ✨</button>
+            </div>
+          </div>
+          <!-- Format locked to 1536×1024 — widest gpt-image-2 supports, best for 360° -->
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="opt-label">Format 360°:</span>
+            <div class="seg" style="pointer-events:none;opacity:.85;">
+              <button class="seg-btn active" style="cursor:default;">🌐 1536 × 1024 &nbsp;·&nbsp; Panorama HD</button>
+            </div>
+          </div>
+          <!-- Variations -->
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="opt-label">Wariacje:</span>
+            <div class="seg" id="n-group">
+              <button class="seg-btn active" data-n="1">×1</button>
+              <button class="seg-btn" data-n="2">×2</button>
+              <button class="seg-btn" data-n="4">×4</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GENERATE -->
+    <button id="gen-btn" class="btn btn-primary btn-lg" data-ripple data-magnetic="0.12">✨ Generuj Świat 360°</button>
+
+    <div id="progress">
+      <div class="progress-track prog-track"><div class="progress-fill" id="prog-fill"></div></div>
+      <div class="prog-txt" id="prog-txt">Inicjalizacja gpt-image-2…</div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result">
+      <div class="result-wrap">
+        <img id="result-img" class="result-img" src="" alt="Generated 360°"/>
+        <div class="result-overlay">
+          <div style="font-size: 22px; font-weight: 800; margin-bottom: 6px;" id="result-title">–</div>
+          <div class="t-meta" style="line-height:1.55; max-width: 660px;" id="result-prompt">–</div>
+          <div style="display:flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;">
+            <a id="btn-explore" href="#" class="btn btn-primary">🌐 Eksploruj w 360°</a>
+            <button id="btn-dl" class="btn btn-ghost">💾 Pobierz PNG</button>
+            <button id="btn-again" class="btn btn-ghost">↺ Wariacja</button>
+          </div>
+        </div>
+      </div>
+      <div id="variations" class="gal-grid" style="display:none;"></div>
+    </div>
+
+    <!-- GALLERY -->
+    <div id="gal-section" style="display:none;">
+      <h2 class="h-title" style="margin-bottom: 14px;">📸 Twoje wygenerowane światy</h2>
+      <div class="gal-grid" id="gal-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/templates.js"></script>
+<script src="/assets/api-client.js"></script>
+<script src="/assets/motion.js"></script>
+<script>
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+const TEMPLATES = window.VW_TEMPLATES || [];
+const CATEGORIES = window.VW_CATEGORIES || ['All'];
+
+let activeCategory = 'All';
+let selectedTpl    = TEMPLATES[0];
+let quality        = 'high';
+let size           = '1536x1024';
+let nVariants      = 1;
+let refFiles       = [];           // File[]
+let lastResult     = null;
+
+/* ── Categories ── */
+const catTabs = $('#cat-tabs');
+CATEGORIES.forEach(cat => {
+  const b = document.createElement('button');
+  b.className = 'cat-tab' + (cat === activeCategory ? ' active' : '');
+  b.textContent = cat;
+  b.onclick = () => { activeCategory = cat; renderTemplates(); $$('.cat-tab').forEach(t => t.classList.toggle('active', t.textContent === cat)); };
+  catTabs.appendChild(b);
+});
+
+/* ── Templates grid ── */
+const grid = $('#tpl-grid');
+function renderTemplates() {
+  const q = $('#tpl-search').value.trim().toLowerCase();
+  grid.innerHTML = '';
+  const list = TEMPLATES.filter(t =>
+    (activeCategory === 'All' || t.category === activeCategory) &&
+    (!q || t.name.toLowerCase().includes(q) || t.prompt.toLowerCase().includes(q) || t.category.toLowerCase().includes(q))
+  );
+  if (!list.length) { grid.innerHTML = '<div class="tpl-empty">Brak szablonów spełniających kryteria.</div>'; return; }
+  list.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tpl' + (selectedTpl && t.id === selectedTpl.id ? ' selected' : '');
+    el.style.background = t.preview ? `url('${t.preview}') center/cover` : t.gradient;
+    el.style.setProperty('--i', i);
+    el.dataset.fx = '';
+    el.innerHTML = `<div class="tpl-check">✓</div><div class="tpl-body">
+      <span class="tpl-icon">${t.icon}</span>
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-tag">${t.category}</div>
+    </div>`;
+    el.onclick = () => selectTemplate(t);
+    grid.appendChild(el);
+  });
+  VW.refresh(grid);
+}
+
+function selectTemplate(t) {
+  selectedTpl = t;
+  $$('.tpl', grid).forEach((el, i) => el.classList.toggle('selected', t === TEMPLATES.filter(x =>
+    (activeCategory === 'All' || x.category === activeCategory) &&
+    (!$('#tpl-search').value || x.name.toLowerCase().includes($('#tpl-search').value.toLowerCase()))
+  )[i]));
+  /* update placeholder if user hasn't typed */
+  const ta = $('#prompt');
+  if (!ta.value || ta.dataset.auto === 'true') {
+    ta.value = '';
+    ta.placeholder = `Np. ${t.prompt.substring(0, 90)}…`;
+    ta.dataset.auto = 'true';
+  }
+}
+
+$('#tpl-search').addEventListener('input', renderTemplates);
+$('#prompt-clear').onclick = () => { const ta = $('#prompt'); ta.value = ''; ta.dataset.auto = 'true'; ta.placeholder = `Np. ${selectedTpl.prompt.substring(0, 90)}…`; };
+$('#prompt').addEventListener('input', function() { this.dataset.auto = 'false'; });
+
+/* ── Segmented controls ── */
+function bindSeg(groupId, onChoose) {
+  const g = $('#' + groupId);
+  $$('.seg-btn', g).forEach(b => b.onclick = () => {
+    $$('.seg-btn', g).forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    onChoose(b.dataset);
+  });
+}
+bindSeg('quality-group', (d) => quality = d.q);
+// size is fixed to 1536x1024 server-side — best for 360° panoramas
+bindSeg('n-group',       (d) => nVariants = parseInt(d.n));
+
+/* ── Reference uploader ── */
+const uploader   = $('#uploader');
+const fileInput  = $('#file-input');
+const refGrid    = $('#ref-grid');
+const refEmpty   = $('#uploader-empty');
+const refCounter = $('#ref-counter');
+
+uploader.addEventListener('click', (e) => { if (e.target.closest('.ref-rm') || e.target.closest('.ref-item')) return; fileInput.click(); });
+uploader.addEventListener('dragover', (e) => { e.preventDefault(); uploader.classList.add('drag'); });
+uploader.addEventListener('dragleave', () => uploader.classList.remove('drag'));
+uploader.addEventListener('drop', (e) => { e.preventDefault(); uploader.classList.remove('drag'); addFiles([...e.dataTransfer.files]); });
+fileInput.addEventListener('change', (e) => addFiles([...e.target.files]));
+
+function addFiles(files) {
+  for (const f of files) {
+    if (refFiles.length >= 4) { VW.toast('Maksymalnie 4 obrazy.', 'warn'); break; }
+    if (!/^image\//.test(f.type)) { VW.toast(`${f.name}: to nie jest obraz.`, 'err'); continue; }
+    if (f.size > 4 * 1024 * 1024) { VW.toast(`${f.name}: przekracza 4MB.`, 'err'); continue; }
+    refFiles.push(f);
+  }
+  renderRefs();
+}
+function removeFile(ix) { refFiles.splice(ix, 1); renderRefs(); }
+function renderRefs() {
+  refCounter.textContent = `${refFiles.length} / 4`;
+  if (!refFiles.length) { refEmpty.style.display = ''; refGrid.style.display = 'none'; refGrid.innerHTML = ''; return; }
+  refEmpty.style.display = 'none'; refGrid.style.display = 'grid'; refGrid.innerHTML = '';
+  refFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const it = document.createElement('div');
+    it.className = 'ref-item';
+    it.innerHTML = `<img src="${url}" alt="ref"/><button class="ref-rm" title="Usuń">✕</button>`;
+    it.querySelector('.ref-rm').onclick = (e) => { e.stopPropagation(); URL.revokeObjectURL(url); removeFile(i); };
+    refGrid.appendChild(it);
+  });
+}
+
+/* ── Last prompt persistence ── */
+function saveLast() {
+  localStorage.setItem('vw-last', JSON.stringify({
+    prompt: $('#prompt').value, templateId: selectedTpl?.id, quality, size, n: nVariants,
+  }));
+}
+$('#last-prompt-btn').onclick = (e) => {
+  e.preventDefault();
+  try {
+    const d = JSON.parse(localStorage.getItem('vw-last') || 'null');
+    if (!d) { VW.toast('Brak zapisanego promptu.', 'warn'); return; }
+    $('#prompt').value = d.prompt || '';
+    $('#prompt').dataset.auto = 'false';
+    if (d.templateId) {
+      const t = TEMPLATES.find(x => x.id === d.templateId);
+      if (t) { activeCategory = 'All'; $$('.cat-tab').forEach(b => b.classList.toggle('active', b.textContent === 'All')); renderTemplates(); selectTemplate(t); }
+    }
+    if (d.quality) { quality = d.quality; bindActive('quality-group', 'q', d.quality); }
+    if (d.size) { size = d.size; bindActive('size-group', 's', d.size); }
+    if (d.n) { nVariants = d.n; bindActive('n-group', 'n', String(d.n)); }
+    VW.toast('Wczytano ostatni prompt.', 'ok');
+  } catch (err) { VW.toast('Błąd: ' + err.message, 'err'); }
+};
+function bindActive(groupId, attr, val) {
+  $$('#' + groupId + ' .seg-btn').forEach(b => b.classList.toggle('active', b.dataset[attr] === val));
+}
+
+/* ── Generate ── */
+// Two step sets: with/without reference images
+const STEPS_TEXT = [
+  '🚀 Inicjalizacja gpt-image-2…',
+  '🎨 Komponowanie sceny 360°…',
+  '🌐 Generowanie panoramy sferycznej…',
+  '💡 Renderowanie oświetlenia HDR…',
+  '✨ Finalizacja panoramy 1536×1024…',
+];
+const STEPS_REF = [
+  '🔍 Analiza obrazów referencyjnych (Vision AI)…',
+  '🧠 Wydobywanie stylu wizualnego…',
+  '🎨 Komponowanie świata 360°…',
+  '🌐 Generowanie panoramy sferycznej…',
+  '💡 Renderowanie oświetlenia HDR…',
+  '✨ Finalizacja panoramy 1536×1024…',
+];
+
+$('#gen-btn').onclick = async function() {
+  const customText = $('#prompt').value.trim();
+  const finalPrompt = customText || selectedTpl.prompt;
+  this.disabled = true;
+  this.innerHTML = '⏳ Generowanie świata…';
+  $('#progress').classList.add('on');
+  $('#result').classList.remove('on');
+
+  const fill = $('#prog-fill'); const txt = $('#prog-txt');
+  fill.style.background = ''; fill.style.width = '0%';
+  const hasRef = refFiles.length > 0;
+  const steps  = hasRef ? STEPS_REF : STEPS_TEXT;
+  const eta    = VW_API.estimateTime({ quality, n: nVariants, hasReference: hasRef });
+  const driver = VW_API.driveProgress(fill, txt, steps, eta);
+
+  try {
+    const opts = { prompt: finalPrompt, quality, size: '1536x1024', templateId: selectedTpl.id, n: nVariants };
+    const data = refFiles.length
+      ? await VW_API.generateWithReference({ ...opts, files: refFiles })
+      : await VW_API.generate(opts);
+    driver.done('✅ Wygenerowano!');
+    lastResult = data;
+    saveLast();
+    setTimeout(() => showResult(data, finalPrompt), 500);
+  } catch (err) {
+    driver.fail('❌ ' + err.message);
+    setTimeout(() => $('#progress').classList.remove('on'), 4500);
+    VW.toast(err.message, 'err', 5000);
+  }
+  this.disabled = false;
+  this.innerHTML = '✨ Generuj Świat 360°';
+};
+
+function showResult(data, prompt) {
+  $('#progress').classList.remove('on');
+  const main = data.results?.[0] || { url: data.url };
+  $('#result-img').src = main.url;
+  $('#result-title').textContent = `${selectedTpl.icon} ${selectedTpl.name}`;
+  $('#result-prompt').textContent = prompt.length > 200 ? prompt.slice(0, 200) + '…' : prompt;
+  $('#btn-explore').href = `viewer360.html?src=${encodeURIComponent(main.url)}`;
+  $('#result').classList.add('on');
+
+  /* variations */
+  const vbox = $('#variations');
+  vbox.innerHTML = '';
+  if (data.results && data.results.length > 1) {
+    vbox.style.display = 'grid';
+    data.results.forEach((r) => {
+      const c = document.createElement('a');
+      c.href = `viewer360.html?src=${encodeURIComponent(r.url)}`;
+      c.className = 'g-card';
+      c.innerHTML = `<img src="${r.url}" loading="lazy"/><div class="g-card-lbl">Wariacja</div>`;
+      vbox.appendChild(c);
+    });
+  } else { vbox.style.display = 'none'; }
+
+  $('#result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  loadHistory();
+}
+
+$('#btn-dl').onclick = () => { if (!lastResult) return; const a = document.createElement('a'); a.href = lastResult.url; a.download = `world-${selectedTpl.id}.png`; a.click(); };
+$('#btn-again').onclick = () => { $('#result').classList.remove('on'); window.scrollTo({ top: 0, behavior: 'smooth' }); $('#gen-btn').click(); };
+
+/* ── Gallery / history ── */
+async function loadHistory() {
+  try {
+    const { images } = await VW_API.list();
+    $('#sb-gen').textContent = images.length;
+    if (!images.length) return;
+    $('#gal-section').style.display = '';
+    const gg = $('#gal-grid'); gg.innerHTML = '';
+    images.forEach((img) => {
+      const tpl = TEMPLATES.find(t => t.id === img.templateId);
+      const el = document.createElement('a');
+      el.href = `viewer360.html?src=${encodeURIComponent(img.url)}`;
+      el.className = 'g-card';
+      el.innerHTML = `<img src="${img.url}" loading="lazy"/><div class="g-card-lbl">${tpl?.name || 'Świat AI'}</div>`;
+      gg.appendChild(el);
+    });
+  } catch {}
+}
+
+/* ── Init ── */
+$('#sb-tpl').textContent = TEMPLATES.length;
+selectTemplate(TEMPLATES[0]);
+renderTemplates();
+loadHistory();
+</script>
+</body>
+</html>

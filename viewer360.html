@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Viewer 360° | VirtualWorld</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/styles.css"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--purple:#a855f7;--indigo:#6366f1;--pink:#ec4899;--cyan:#06b6d4;--amber:#f59e0b;--border:rgba(255,255,255,0.08);--glass:rgba(10,10,20,0.75);--radius:12px}
+body{font-family:'Inter',sans-serif;background:#000;overflow:hidden;color:#fff}
+/* CANVAS */
+#c{position:fixed;inset:0;z-index:0}
+/* FADE */
+#fade{position:fixed;inset:0;z-index:5;background:#000;opacity:0;pointer-events:none;transition:opacity .4s}
+/* LOADER */
+#loader{position:fixed;inset:0;z-index:100;background:#07070e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s,visibility .5s}
+#loader.gone{opacity:0;visibility:hidden}
+.ld-title{font-size:22px;font-weight:700}.ld-title span{color:var(--purple)}
+.ld-track{width:200px;height:3px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.ld-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--indigo));width:0;transition:width .3s}
+.ld-txt{font-size:12px;color:rgba(255,255,255,.4)}
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:20;background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);backdrop-filter:blur(0);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:10px}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-home{font-size:12px;color:rgba(255,255,255,.6);text-decoration:none;padding:5px 10px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid var(--border);transition:all .2s}
+.tb-home:hover{color:#fff;background:rgba(255,255,255,.12)}
+.tb-room-name{font-size:14px;font-weight:600;color:#fff}
+.tb-right{display:flex;align-items:center;gap:6px}
+.ic-btn{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s;color:#fff;flex-shrink:0}
+.ic-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.18)}
+.ic-btn.active{background:rgba(168,85,247,.2);border-color:rgba(168,85,247,.4)}
+/* PANELS */
+.panel{position:fixed;top:52px;bottom:48px;z-index:15;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;overflow-x:hidden}
+.panel::-webkit-scrollbar{width:3px}.panel::-webkit-scrollbar-thumb{background:rgba(168,85,247,.3);border-radius:3px}
+/* LEFT PANEL - rooms */
+#lpanel{left:0;width:260px;border-radius:0 var(--radius) var(--radius) 0;border-left:none;transform:translateX(-100%)}
+#lpanel.open{transform:translateX(0)}
+/* RIGHT PANEL - controls */
+#rpanel{right:0;width:260px;border-radius:var(--radius) 0 0 var(--radius);border-right:none;transform:translateX(100%)}
+#rpanel.open{transform:translateX(0)}
+.panel-title{padding:14px 16px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.5);border-bottom:1px solid var(--border)}
+/* ROOM LIST */
+.rlist{display:flex;flex-direction:column;gap:6px;padding:10px}
+.ritem{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;border:1px solid transparent;transition:all .2s}
+.ritem:hover{background:rgba(255,255,255,.05);border-color:var(--border)}
+.ritem.active{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.25)}
+.rthumb{width:46px;height:30px;border-radius:5px;background-size:cover;background-position:center;flex-shrink:0;border:1px solid rgba(255,255,255,.1)}
+.rinfo{flex:1;min-width:0}
+.rname{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtag{font-size:10px;color:rgba(255,255,255,.4)}
+/* ENV CONTROLS */
+.ctrl-group{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.ctrl-label{font-size:12px;color:rgba(255,255,255,.6);display:flex;justify-content:space-between}
+.ctrl-val{color:#fff;font-weight:600}
+input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:rgba(255,255,255,.1);border-radius:4px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--indigo));box-shadow:0 0 8px rgba(168,85,247,.5);cursor:pointer}
+.ctrl-btn{width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:rgba(255,255,255,.8);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.ctrl-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.ctrl-btn.active{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.35);color:var(--purple)}
+/* BOTTOM */
+#bottom{position:fixed;bottom:0;left:0;right:0;height:48px;z-index:20;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);display:flex;align-items:center;justify-content:center;gap:10px;pointer-events:none}
+.hint{font-size:11px;color:rgba(255,255,255,.4);pointer-events:none}
+/* HOTSPOTS */
+#hs-layer{position:fixed;inset:0;z-index:10;pointer-events:none}
+.hotspot{position:absolute;transform:translate(-50%,-50%);pointer-events:all;cursor:pointer}
+.hs-dot{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(168,85,247,.3);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:13px;animation:hspulse 2.4s ease-in-out infinite,hsbreathe 3.2s ease-in-out infinite;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.hotspot:hover .hs-dot{transform:scale(1.3);background:rgba(168,85,247,.5)}
+@keyframes hspulse{0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.5)}50%{box-shadow:0 0 0 12px rgba(168,85,247,0)}}
+@keyframes hsbreathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+/* COMPASS */
+#compass{position:fixed;bottom:60px;right:18px;z-index:18;width:78px;height:78px;border-radius:50%;background:rgba(10,10,20,.75);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px);box-shadow:0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.55);font-weight:700;letter-spacing:.05em;pointer-events:none;transition:opacity .3s}
+#compass.hidden{opacity:0}
+#compass-needle{position:absolute;inset:8px;border-radius:50%;border:1px dashed rgba(255,255,255,.12);transition:transform .15s linear}
+#compass-n{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--purple,#a855f7);font-weight:800}
+#compass-arrow{position:absolute;top:50%;left:50%;width:2px;height:30px;margin-left:-1px;margin-top:-15px;background:linear-gradient(to top,transparent 50%,#a855f7 50%);transform-origin:center}
+#compass-deg{font-variant-numeric:tabular-nums}
+.hs-label{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;font-weight:500;padding:4px 9px;border-radius:6px;background:rgba(10,10,20,.85);border:1px solid var(--border);backdrop-filter:blur(8px);opacity:0;transition:opacity .2s;pointer-events:none}
+.hotspot:hover .hs-label{opacity:1}
+/* TOAST */
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:50;font-size:12px;font-weight:500;padding:8px 16px;border-radius:8px;background:rgba(168,85,247,.9);border:1px solid rgba(168,85,247,.5);backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="fade"></div>
+<div id="hs-layer"></div>
+<div id="toast"></div>
+
+<!-- COMPASS -->
+<div id="compass" title="Heading">
+  <div id="compass-needle"></div>
+  <div id="compass-n">N</div>
+  <div id="compass-arrow"></div>
+  <span id="compass-deg">0°</span>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="ld-title">Virtual<span>World</span> 360</div>
+  <div class="ld-track"><div class="ld-fill" id="ld-fill"></div></div>
+  <div class="ld-txt" id="ld-txt">Wczytywanie panoramy…</div>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="tb-left">
+    <a href="index.html" class="tb-home">← Dashboard</a>
+    <div class="tb-room-name" id="room-label">–</div>
+  </div>
+  <div class="tb-right">
+    <div class="ic-btn" id="btn-rooms" title="Pokoje">🏠</div>
+    <div class="ic-btn" id="btn-env" title="Środowisko">🎛</div>
+    <div class="ic-btn" id="btn-rotate" title="Auto-obrót">⟳</div>
+    <div class="ic-btn" id="btn-hs" title="Hotspoty">📌</div>
+    <div class="ic-btn" id="btn-shot" title="Screenshot">📸</div>
+    <div class="ic-btn" id="btn-fs" title="Pełny ekran">⛶</div>
+  </div>
+</div>
+
+<!-- LEFT PANEL - ROOMS -->
+<div class="panel" id="lpanel">
+  <div class="panel-title">🌍 Środowiska</div>
+  <div class="rlist" id="rlist"></div>
+</div>
+
+<!-- RIGHT PANEL - ENV CONTROLS -->
+<div class="panel" id="rpanel">
+  <div class="panel-title">🎛 Kontrola Środowiska</div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Jasność <span class="ctrl-val" id="v-bright">100%</span></div>
+    <input type="range" id="s-bright" min="20" max="200" value="100"/>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Kontrast <span class="ctrl-val" id="v-contrast">100%</span></div>
+    <input type="range" id="s-contrast" min="50" max="200" value="100"/>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Nasycenie <span class="ctrl-val" id="v-sat">100%</span></div>
+    <input type="range" id="s-sat" min="0" max="250" value="100"/>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">FOV / Zoom <span class="ctrl-val" id="v-fov">75°</span></div>
+    <input type="range" id="s-fov" min="40" max="110" value="75"/>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Prędkość obrotu <span class="ctrl-val" id="v-speed">1×</span></div>
+    <input type="range" id="s-speed" min="1" max="10" value="3"/>
+  </div>
+  <div class="ctrl-group" style="gap:6px">
+    <button class="ctrl-btn" id="btn-tour">🗺 Auto-Tour (pokoje)</button>
+    <button class="ctrl-btn" onclick="resetEnv()">↺ Reset efektów</button>
+    <a href="generator.html" class="ctrl-btn" style="display:block;text-align:center;text-decoration:none;color:rgba(255,255,255,.8)">✨ Generator AI</a>
+  </div>
+</div>
+
+<!-- BOTTOM -->
+<div id="bottom">
+  <span class="hint">🖱 Przeciągnij · 🔍 Scroll = zoom · ⌨ WASD · F = fullscreen</span>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
+
+const ROOMS=[
+  {id:'hq',name:'AI Evolution HQ',src:'360room.png',color:'#a855f7',icon:'🖥️',tags:'Biuro · AI',
+   hotspots:[{lon:120,lat:5,label:'Serwery',icon:'⚡'},{lon:250,lat:-10,label:'Strefa relaksu',icon:'🛋'}]},
+  {id:'server',name:'Serwer Kwantowy',src:'env-server.jpg',color:'#6366f1',icon:'⚡',tags:'Technologia · Neon',
+   hotspots:[{lon:60,lat:0,label:'Rack A1',icon:'🖥'},{lon:180,lat:15,label:'Cooling Unit',icon:'❄'}]},
+  {id:'studio',name:'Studio Kreatywne',src:'env-studio.jpg',color:'#ec4899',icon:'🎨',tags:'Design · Creative',
+   hotspots:[{lon:90,lat:-5,label:'Główny monitor',icon:'🖥'},{lon:300,lat:10,label:'Tablica kreatywna',icon:'✏️'}]},
+  {id:'boardroom',name:'Sala Konferencyjna',src:'env-boardroom.jpg',color:'#f59e0b',icon:'💼',tags:'Biznes · Luksus',
+   hotspots:[{lon:180,lat:0,label:'Widok na miasto',icon:'🌆'},{lon:0,lat:5,label:'Ekran prezentacji',icon:'📊'}]},
+  {id:'space',name:'Orbita LEO',src:'env-space.jpg',color:'#06b6d4',icon:'🛸',tags:'Kosmos · Orbit',
+   hotspots:[{lon:45,lat:10,label:'Ziemia',icon:'🌍'},{lon:220,lat:-15,label:'Centrum dowodzenia',icon:'🎛'}]},
+];
+
+// THREE setup
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+camera.position.set(0,0,.01);
+const geo=new THREE.SphereGeometry(500,60,40);
+geo.scale(-1,1,1);
+const mat=new THREE.MeshBasicMaterial();
+const sphere=new THREE.Mesh(geo,mat);
+scene.add(sphere);
+
+// State
+let lon=180,lat=0,tLon=180,tLat=0,fov=75,tFov=75;
+let autoRotate=false,autoTour=false,tourTimer=null;
+let currentRoom=null,hsVisible=true;
+let pointerDown=false,px=0,py=0;
+let bright=100,contrast=100,sat=100,rotSpeed=3;
+
+// Params
+const params=new URLSearchParams(location.search);
+const initRoom=params.get('room')||'hq';
+const customSrc=params.get('src'); // generated image URL
+
+// Load room
+const loader=new THREE.TextureLoader();
+function loadRoom(room,fast=false){
+  if(currentRoom===room)return;
+  currentRoom=room;
+  document.getElementById('room-label').textContent=room.name;
+  updateRoomList();
+  loadTexture(room.src,room,fast);
+}
+function loadTexture(src,room,fast=false){
+  const fade=document.getElementById('fade');
+  if(!fast){fade.style.opacity='1';fade.style.pointerEvents='all';}
+  document.getElementById('ld-txt').textContent='Wczytywanie: '+(room?.name||src)+'…';
+  document.getElementById('ld-fill').style.width='0%';
+  loader.load(src,tex=>{
+    tex.colorSpace=THREE.SRGBColorSpace;
+    mat.map=tex;mat.needsUpdate=true;
+    if(room)buildHotspots(room);
+    setTimeout(()=>{
+      fade.style.opacity='0';fade.style.pointerEvents='none';
+      document.getElementById('loader').classList.add('gone');
+    },fast?100:400);
+  },xhr=>{
+    if(xhr.total)document.getElementById('ld-fill').style.width=(xhr.loaded/xhr.total*100)+'%';
+  },()=>{
+    document.getElementById('ld-txt').textContent='⚠️ Błąd ładowania obrazu';
+  });
+}
+
+// Build room list
+const rlist=document.getElementById('rlist');
+function updateRoomList(){
+  rlist.querySelectorAll('.ritem').forEach(el=>el.classList.toggle('active',el.dataset.id===currentRoom?.id));
+}
+ROOMS.forEach(r=>{
+  const el=document.createElement('div');
+  el.className='ritem';el.dataset.id=r.id;
+  el.innerHTML=`<div class="rthumb" style="background-image:url('${r.src}')"></div>
+    <div class="rinfo"><div class="rname">${r.icon} ${r.name}</div><div class="rtag" style="color:${r.color}">${r.tags}</div></div>`;
+  el.onclick=()=>{loadRoom(r);document.getElementById('lpanel').classList.remove('open');};
+  rlist.appendChild(el);
+});
+
+// HOTSPOTS
+const hsLayer=document.getElementById('hs-layer');
+let hotspotEls=[];
+function buildHotspots(room){
+  hsLayer.innerHTML='';hotspotEls=[];
+  (room.hotspots||[]).forEach(h=>{
+    const el=document.createElement('div');el.className='hotspot';
+    el.innerHTML=`<div class="hs-dot">${h.icon}</div><div class="hs-label">${h.label}</div>`;
+    hsLayer.appendChild(el);
+    hotspotEls.push({el,lon:h.lon,lat:h.lat});
+  });
+}
+function updateHotspots(){
+  hotspotEls.forEach(h=>{
+    const phi=THREE.MathUtils.degToRad(90-h.lat);
+    const theta=THREE.MathUtils.degToRad(h.lon);
+    const v=new THREE.Vector3(Math.sin(phi)*Math.cos(theta),Math.cos(phi),Math.sin(phi)*Math.sin(theta));
+    v.project(camera);
+    const behind=v.z>1;
+    h.el.style.display=behind||!hsVisible?'none':'block';
+    h.el.style.left=((v.x+1)/2*innerWidth)+'px';
+    h.el.style.top=((-v.y+1)/2*innerHeight)+'px';
+  });
+}
+
+// ENV filter
+function applyFilter(){canvas.style.filter=`brightness(${bright}%) contrast(${contrast}%) saturate(${sat}%)`;}
+function resetEnv(){bright=100;contrast=100;sat=100;document.getElementById('s-bright').value=100;document.getElementById('s-contrast').value=100;document.getElementById('s-sat').value=100;['v-bright','v-contrast','v-sat'].forEach(id=>document.getElementById(id).textContent='100%');applyFilter();}
+
+// Sliders
+['bright','contrast','sat'].forEach(k=>{
+  const s=document.getElementById('s-'+k);
+  s.oninput=()=>{
+    if(k==='bright')bright=+s.value;
+    else if(k==='contrast')contrast=+s.value;
+    else sat=+s.value;
+    document.getElementById('v-'+k).textContent=s.value+'%';
+    applyFilter();
+  };
+});
+document.getElementById('s-fov').oninput=e=>{tFov=+e.target.value;document.getElementById('v-fov').textContent=e.target.value+'°';};
+document.getElementById('s-speed').oninput=e=>{rotSpeed=+e.target.value;document.getElementById('v-speed').textContent=e.target.value+'×';};
+
+// Controls
+document.getElementById('btn-rooms').onclick=()=>{document.getElementById('lpanel').classList.toggle('open');document.getElementById('rpanel').classList.remove('open');};
+document.getElementById('btn-env').onclick=()=>{document.getElementById('rpanel').classList.toggle('open');document.getElementById('lpanel').classList.remove('open');};
+document.getElementById('btn-rotate').onclick=function(){autoRotate=!autoRotate;this.classList.toggle('active',autoRotate);};
+document.getElementById('btn-hs').onclick=function(){hsVisible=!hsVisible;this.classList.toggle('active',hsVisible);};
+document.getElementById('btn-fs').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();};
+document.getElementById('btn-shot').onclick=()=>{
+  renderer.render(scene,camera);
+  const link=document.createElement('a');link.download='panorama-360.png';link.href=canvas.toDataURL();link.click();
+  showToast('📸 Zrzut ekranu zapisany!');
+};
+
+// Auto Tour
+document.getElementById('btn-tour').onclick=function(){
+  autoTour=!autoTour;this.classList.toggle('active',autoTour);
+  if(autoTour){
+    let idx=ROOMS.findIndex(r=>r.id===currentRoom?.id);
+    tourTimer=setInterval(()=>{idx=(idx+1)%ROOMS.length;loadRoom(ROOMS[idx]);},8000);
+    showToast('🗺 Auto-Tour włączony');
+  } else {clearInterval(tourTimer);showToast('⏹ Auto-Tour zatrzymany');}
+};
+
+// Toast
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// Pointer
+canvas.addEventListener('pointerdown',e=>{pointerDown=true;px=e.clientX;py=e.clientY;document.body.style.cursor='grabbing';});
+window.addEventListener('pointermove',e=>{if(!pointerDown)return;tLon-=(e.clientX-px)*.18;tLat+=(e.clientY-py)*.18;px=e.clientX;py=e.clientY;});
+window.addEventListener('pointerup',()=>{pointerDown=false;document.body.style.cursor='grab';});
+window.addEventListener('wheel',e=>{tFov=Math.max(40,Math.min(110,tFov+e.deltaY*.05));document.getElementById('s-fov').value=tFov;document.getElementById('v-fov').textContent=Math.round(tFov)+'°';},{passive:true});
+
+// Keyboard
+window.addEventListener('keydown',e=>{
+  const spd=2;
+  if(e.key==='a'||e.key==='ArrowLeft')tLon-=spd;
+  if(e.key==='d'||e.key==='ArrowRight')tLon+=spd;
+  if(e.key==='w'||e.key==='ArrowUp')tLat-=spd;
+  if(e.key==='s'||e.key==='ArrowDown')tLat+=spd;
+  if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  if(e.key===' '){autoRotate=!autoRotate;document.getElementById('btn-rotate').classList.toggle('active',autoRotate);}
+});
+
+// Resize
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// Animate
+function lerp(a,b,t){return a+(b-a)*t;}
+function animate(){
+  requestAnimationFrame(animate);
+  if(autoRotate&&!pointerDown)tLon+=rotSpeed*.025;
+  lon=lerp(lon,tLon,.07);
+  lat=lerp(lat,Math.max(-89,Math.min(89,tLat)),.07);
+  fov=lerp(fov,tFov,.1);
+  const phi=THREE.MathUtils.degToRad(90-lat);
+  const theta=THREE.MathUtils.degToRad(lon);
+  camera.fov=fov;camera.updateProjectionMatrix();
+  camera.lookAt(Math.sin(phi)*Math.cos(theta),Math.cos(phi),Math.sin(phi)*Math.sin(theta));
+  renderer.render(scene,camera);
+  updateHotspots();
+  updateCompass();
+}
+
+// COMPASS
+const compassArrow=document.getElementById('compass-arrow');
+const compassDeg=document.getElementById('compass-deg');
+function updateCompass(){
+  const heading=((lon%360)+360)%360;
+  compassArrow.style.transform=`rotate(${-heading}deg)`;
+  compassDeg.textContent=Math.round(heading)+'°';
+}
+
+// Extra keyboard: 1-9 jump to room, R toggle rotate, H toggle hotspots
+window.addEventListener('keydown',e=>{
+  const n=parseInt(e.key);
+  if(!isNaN(n)&&n>=1&&n<=9&&ROOMS[n-1]){loadRoom(ROOMS[n-1]);showToast(`→ ${ROOMS[n-1].name}`);}
+  if(e.key==='r'||e.key==='R'){autoRotate=!autoRotate;document.getElementById('btn-rotate').classList.toggle('active',autoRotate);showToast(autoRotate?'⟳ Auto-rotate':'⏸ Pauza');}
+  if(e.key==='h'||e.key==='H'){hsVisible=!hsVisible;document.getElementById('btn-hs').classList.toggle('active',hsVisible);}
+});
+animate();
+
+// Init
+document.body.style.cursor='grab';
+if(customSrc){
+  // Custom generated image opened directly
+  const customRoom={id:'custom',name:'Wygenerowany Świat ✨',src:customSrc,hotspots:[],color:'#a855f7',icon:'✨',tags:'AI · Generated'};
+  ROOMS.unshift(customRoom);
+  // Add to room list UI
+  const el=document.createElement('div');
+  el.className='ritem active';el.dataset.id='custom';
+  el.innerHTML=`<div class="rthumb" style="background-image:url('${customSrc}')"></div>
+    <div class="rinfo"><div class="rname">✨ Wygenerowany Świat</div><div class="rtag" style="color:#a855f7">AI · Generated</div></div>`;
+  el.onclick=()=>{loadRoom(customRoom);document.getElementById('lpanel').classList.remove('open');};
+  rlist.prepend(el);
+  currentRoom=customRoom;
+  document.getElementById('room-label').textContent=customRoom.name;
+  loadTexture(customSrc,customRoom,true);
+} else {
+  const initR=ROOMS.find(r=>r.id===initRoom)||ROOMS[0];
+  loadRoom(initR,true);
+}
+</script>
+</body>
+</html>
